@@ -6,7 +6,7 @@
     <title>PDA Inventory Pro - Multi Device</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2/family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; }
         .scan-input { font-size: 24px !important; text-align: center; }
@@ -23,10 +23,21 @@
             <p class="text-xs opacity-80">Vị trí $\rightarrow$ Tag ID $\rightarrow$ Mã Hàng $\rightarrow$ Số Lượng</p>
         </div>
 
-        <!-- Machine Settings (MỚI) -->
-        <div class="p-3 bg-gray-100 border-b flex items-center justify-between gap-2">
-            <span class="text-xs font-bold text-gray-500 uppercase">Tên máy quét:</span>
-            <input type="text" id="machineName" class="text-xs p-1 border rounded w-32 text-center font-bold" placeholder="Ví dụ: Máy 1">
+        <!-- MACHINE SETTINGS SECTION (Cập nhật mới) -->
+        <div class="p-4 bg-gray-50 border-b border-gray-200">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex-1">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Tên máy quét (ID máy):</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="machineName" 
+                               class="flex-1 p-2 border rounded-lg text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" 
+                               placeholder="Ví dụ: Máy 1">
+                        <button onclick="saveMachineName()" class="bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 transition active:scale-95">
+                            Lưu
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Location Section -->
@@ -103,11 +114,25 @@
         let tempRow = { tag: '', item: '', qty: '' };
         let scannedData = JSON.parse(localStorage.getItem('pda_data_pro')) || [];
 
-        // Load tên máy từ LocalStorage
-        machineInput.value = localStorage.getItem('pda_machine_name') || '';
-        machineInput.addEventListener('input', () => {
-            localStorage.setItem('pda_machine_name', machineInput.value);
-        });
+        // KHỞI TẠO TÊN MÁY TỪ LOCALSTORAGE
+        window.onload = function() {
+            const savedName = localStorage.getItem('pda_machine_name');
+            if (savedName) {
+                machineInput.value = savedName;
+            }
+            updateUI();
+        };
+
+        // HÀM LƯU TÊN MÁY
+        function saveMachineName() {
+            const name = machineInput.value.trim();
+            if (name) {
+                localStorage.setItem('pda_machine_name', name);
+                alert('✅ Đã lưu tên máy: ' + name);
+            } else {
+                alert('Vui lòng nhập tên máy trước khi lưu!');
+            }
+        }
 
         function updateUI() {
             locDisp.innerText = currentLoc || 'Chưa chọn vị trí';
@@ -119,7 +144,7 @@
                 dataList.appendChild(tr);
             });
             countDisp.innerText = `${scannedData.length} dòng`;
-            localStorage.setItem('pda_data_pro', JSON.stringify(scannedData));
+            localStorage.setItem('pda_//data_pro', JSON.stringify(scannedData));
             updateStepper();
         }
 
@@ -136,7 +161,6 @@
                 inputLabel.innerText = "ĐANG CHỜ: NHẬP SỐ LƯỢNG";
                 s1.classList.add('step-done');
                 s2.classList.add('step-done');
-                s3.classList.add('step-//active');
                 s3.classList.add('step-active');
             } else {
                 inputLabel.innerText = "ĐANG CHỜ: QUÉT VỊ TRÍ";
@@ -170,7 +194,7 @@
                         item: tempRow.item,
                         qty: tempRow.qty,
                         loc: currentLoc,
-                        machine: machineInput.value || 'Unknown' // Gửi tên máy lên Cloud
+                        machine: machineInput.value || 'Unknown' // LẤY TÊN MÁY HIỆN TẠI
                     });
                     tempRow = { tag: '', item: '', qty: '' };
                     currentStep = 'TAG';
@@ -189,7 +213,7 @@
             }
 
             // THAY LINK GOOGLE SCRIPT CỦA ANH VÀO ĐÂY
-            const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbxkRo3mlnuk845b8nJNc2_cm9yiCbhiu_M0Q6944mhYtfIx3lEsUpqmBbKx0Am3b1jhxg/exec'; 
+            const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbzPYix88CwPxDwBNY_5mTAtQJ3_6Pck6mWjfmT8kQtd5bO4humDOs3AUty4vs_4ksjzWA/exec'; 
 
             const btn = document.getElementById('btnExport');
             const originalText = btn.innerHTML;
