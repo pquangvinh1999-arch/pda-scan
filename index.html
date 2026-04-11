@@ -3,223 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WHM PRO - Vinh Enterprise</title>
+    <title>WHM PRO - Vue Edition</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4f7fe; }
-        .sidebar-active { background: #4f46e5; color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4); }
-        .table-container { height: calc(100vh - 220px); overflow: auto; }
-        thead th { position: sticky; top: 0; background: #fff; z-index: 10; border-bottom: 2px solid #e2e8f0; }
-        input:disabled { cursor: not-allowed; opacity: 0.5; }
-    </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="bg-slate-50">
 
+<div id="app" class="flex h-screen overflow-hidden">
     <aside class="w-64 bg-white border-r border-slate-200 flex flex-col">
-        <div class="p-6 border-b border-slate-100">
-            <h1 class="text-xl font-extrabold text-indigo-600">WHM PRO <span class="text-[10px] text-slate-400 block tracking-widest uppercase">By Vinh</span></h1>
+        <div class="p-6 border-b">
+            <h1 class="text-xl font-extrabold text-indigo-600">WHM PRO VUE</h1>
         </div>
         <nav class="flex-1 p-4 space-y-2">
-            <div onclick="switchPage('nhap')" id="m-nhap" class="flex items-center gap-3 p-3 rounded-xl cursor-pointer font-bold sidebar-active">Nhập kho (Ánh xạ)</div>
-            <div onclick="switchPage('tonkho')" id="m-tonkho" class="flex items-center gap-3 p-3 rounded-xl cursor-pointer font-bold text-slate-500 hover:bg-slate-50 transition-all">Tồn Kho Thành Phẩm</div>
+            <div @click="page = 'nhap'" :class="page === 'nhap' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-100'" class="p-3 rounded-xl cursor-pointer font-bold transition-all">Nhập kho</div>
+            <div @click="page = 'tonkho'; fetchSheetData()" :class="page === 'tonkho' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-100'" class="p-3 rounded-xl cursor-pointer font-bold transition-all">Tồn Kho</div>
         </nav>
     </aside>
 
     <div class="flex-1 flex flex-col">
         <header class="h-16 bg-white border-b flex items-center justify-between px-8">
-            <h2 id="pageTitle" class="text-lg font-bold text-slate-800">Quy trình Nhập kho 3 Bước</h2>
-            <div id="clock" class="text-sm font-bold text-slate-500"></div>
+            <h2 class="font-bold">{{ page === 'nhap' ? 'Quy trình Nhập kho' : 'Tồn Kho Thành Phẩm' }}</h2>
+            <div class="text-sm font-bold text-slate-400">{{ currentTime }}</div>
         </header>
 
         <main class="flex-1 p-6 overflow-hidden">
-            
-            <div id="view-nhap" class="max-w-xl mx-auto space-y-4">
-                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span id="stepLabel" class="font-bold text-indigo-600 text-lg">Bước 1: Quét Vị trí (Bin)</span>
-                        <button onclick="location.reload()" class="text-xs font-bold text-red-500 bg-red-50 px-3 py-1 rounded-lg">Reset Mới</button>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        <input type="text" id="inpBin" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-center text-xl font-bold focus:border-indigo-500 outline-none" placeholder="1. Quét Vị trí (Bin)">
-                        <input type="text" id="inpTag" disabled class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-center text-xl font-bold focus:border-indigo-500 outline-none" placeholder="2. Quét Tag ID">
-                        <input type="number" id="inpQty" disabled class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-center text-xl font-bold focus:border-indigo-500 outline-none" placeholder="3. Nhập Số Lượng (QTY)">
+            <div v-if="page === 'nhap'" class="max-w-xl mx-auto">
+                <div class="bg-white p-8 rounded-3xl shadow-xl space-y-4">
+                    <div class="flex justify-between">
+                        <span class="font-bold text-indigo-600">Bước {{ step }}: {{ stepLabel }}</span>
+                        <button @click="resetForm" class="text-xs text-red-500 font-bold">Làm mới</button>
                     </div>
 
-                    <div class="pt-4 border-t flex justify-between items-center">
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">Đang chờ đồng bộ</p>
-                            <p class="text-2xl font-black text-indigo-600"><span id="qCount">0</span> Tags</p>
-                        </div>
-                        <button onclick="syncData()" id="btnSync" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 active:scale-95 transition-all">ĐỒNG BỘ LÊN CLOUD</button>
+                    <div class="space-y-3">
+                        <input v-model="form.bin" :disabled="step !== 1" @keyup.enter="step = 2" ref="inp1" class="w-full p-4 bg-slate-50 border-2 rounded-2xl text-center text-xl font-bold focus:border-indigo-500 outline-none" placeholder="1. Quét Bin">
+                        <input v-model="form.tag" :disabled="step !== 2" @keyup.enter="step = 3" ref="inp2" class="w-full p-4 bg-slate-50 border-2 rounded-2xl text-center text-xl font-bold focus:border-indigo-500 outline-none" placeholder="2. Quét Tag ID">
+                        <input v-model="form.qty" :disabled="step !== 3" @keyup.enter="addToQueue" ref="inp3" type="number" class="w-full p-4 bg-slate-50 border-2 rounded-2xl text-center text-xl font-bold focus:border-indigo-500 outline-none" placeholder="3. Nhập Số Lượng">
+                    </div>
+
+                    <div class="pt-4 flex justify-between items-center">
+                        <p class="text-2xl font-black text-indigo-600">{{ queue.length }} Tags</p>
+                        <button @click="syncData" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg">ĐỒNG BỘ CLOUD</button>
                     </div>
                 </div>
-                <div id="queueList" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2"></div>
             </div>
 
-            <div id="view-tonkho" class="hidden h-full flex flex-col space-y-4">
-                <div class="flex justify-between items-center">
-                    <input type="text" id="searchBox" oninput="filterTable()" placeholder="Tìm Tag, Bin..." class="p-3 pl-5 border rounded-xl w-96 shadow-sm outline-none focus:ring-2 ring-indigo-500">
-                    <button onclick="fetchSheetData()" class="bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold">Làm mới dữ liệu</button>
-                </div>
-                <div class="bg-white rounded-2xl border shadow-sm flex-1 overflow-hidden">
-                    <div class="table-container">
-                        <table class="w-full text-left text-[11px]">
-                            <thead class="text-slate-500 font-bold uppercase">
-                                <tr>
-                                    <th class="p-4">LP NO</th><th class="p-4">MÃ HÀNG</th><th class="p-4">QTY THỰC</th>
-                                    <th class="p-4">QTY ISCALA</th><th class="p-4">VỊ TRÍ</th><th class="p-4">NGÀY NHẬP</th>
-                                    <th class="p-4">TAG ID</th><th class="p-4">BIN</th><th class="p-4 text-center">THAO TÁC</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventoryBody" class="divide-y divide-slate-100"></tbody>
-                        </table>
-                    </div>
+            <div v-else class="h-full flex flex-col space-y-4">
+                <input v-model="search" placeholder="Tìm kiếm nhanh..." class="p-3 border rounded-xl w-96 shadow-sm">
+                <div class="bg-white rounded-2xl border shadow-sm flex-1 overflow-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 sticky top-0">
+                            <tr>
+                                <th class="p-4">MÃ HÀNG</th><th class="p-4">QTY THỰC</th><th class="p-4">TAG ID</th><th class="p-4 text-center">THAO TÁC</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(item, index) in filteredData" :key="index" class="border-b hover:bg-slate-50">
+                                <td class="p-4 font-bold">{{ item.vals[1] }}</td>
+                                <td class="p-4 text-blue-600 font-black">{{ item.vals[2] }}</td>
+                                <td class="p-4">{{ item.vals[7] }}</td>
+                                <td class="p-4 text-center">
+                                    <button @click="editRow(item)" class="text-indigo-600 font-bold mr-3">Sửa</button>
+                                    <button @click="deleteRow(item)" class="text-red-500 font-bold">Xóa</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </main>
     </div>
+</div>
 
-    <script>
-        // --- CẤU HÌNH ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwjyXGdrpZxYk45m8ttc6e7-k2NzOPrD_N5gOlWXxYz0RLIY1nkLrQLo7QGpmJ5j-bIxQ/exec'; 
-        const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/187ELbEKpx_ZOlIowIj9M0Rqt7V3R2SMdcrtGUylNAnA/export?format=csv&gid=606205569';
-        
-        let scanQueue = [];
-        let allData = [];
+<script>
+    const { createApp, ref, computed, onMounted, watch } = Vue;
 
-        const inpBin = document.getElementById('inpBin');
-        const inpTag = document.getElementById('inpTag');
-        const inpQty = document.getElementById('inpQty');
+    createApp({
+        setup() {
+            const page = ref('nhap');
+            const step = ref(1);
+            const search = ref('');
+            const queue = ref([]);
+            const allData = ref([]);
+            const currentTime = ref(new Date().toLocaleString());
+            const form = ref({ bin: '', tag: '', qty: '' });
 
-        // LUỒNG 3 BƯỚC
-        inpBin.onkeypress = (e) => { if(e.key==='Enter' && inpBin.value) { 
-            inpBin.disabled = true; inpTag.disabled = false; inpTag.focus(); 
-            document.getElementById('stepLabel').innerText = "Bước 2: Quét Tag ID"; 
-        }};
+            const API_URL = 'API_CỦA_ANH_VÀO_ĐÂY';
+            const CSV_URL = 'CSV_CỦA_ANH_VÀO_ĐÂY';
 
-        inpTag.onkeypress = (e) => { if(e.key==='Enter' && inpTag.value) { 
-            inpTag.disabled = true; inpQty.disabled = false; inpQty.focus(); 
-            document.getElementById('stepLabel').innerText = "Bước 3: Nhập Số Lượng"; 
-        }};
-
-        inpQty.onkeypress = (e) => { if(e.key==='Enter' && inpQty.value) {
-            const now = new Date();
-            scanQueue.push({
-                bin: inpBin.value.trim(),
-                tag: inpTag.value.trim(),
-                qty: inpQty.value.trim(),
-                date: `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`,
-                id: Date.now()
+            // Tự động nhảy label theo bước
+            const stepLabel = computed(() => {
+                if (step.value === 1) return "Quét Vị trí (Bin)";
+                if (step.value === 2) return "Quét Tag ID";
+                return "Nhập Số Lượng (QTY)";
             });
-            renderQueue();
-            // Reset về bước 2 (Giữ nguyên Bin để quét Tag tiếp theo)
-            inpTag.value = ''; inpQty.value = '';
-            inpTag.disabled = false; inpQty.disabled = true;
-            inpTag.focus(); document.getElementById('stepLabel').innerText = "Bước 2: Quét Tag ID";
-        }};
 
-        function renderQueue() {
-            document.getElementById('qCount').innerText = scanQueue.length;
-            document.getElementById('queueList').innerHTML = scanQueue.map(item => `
-                <div onclick="removeFromQueue(${item.id})" class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 flex justify-between items-center cursor-pointer hover:bg-red-50 group">
-                    <div>
-                        <p class="text-[10px] font-bold text-indigo-400 group-hover:text-red-400 uppercase">TAG: ${item.tag}</p>
-                        <p class="text-xs font-bold text-slate-700">${item.qty} Pcs | Bin: ${item.bin}</p>
-                    </div>
-                    <span class="text-slate-300 group-hover:text-red-500 text-lg">✕</span>
-                </div>
-            `).join('');
-        }
+            // Tự động lọc bảng khi gõ tìm kiếm
+            const filteredData = computed(() => {
+                return allData.value.filter(item => 
+                    item.vals.join(' ').toLowerCase().includes(search.value.toLowerCase())
+                );
+            });
 
-        function removeFromQueue(id) {
-            scanQueue = scanQueue.filter(i => i.id !== id);
-            renderQueue();
-        }
+            const addToQueue = () => {
+                if(!form.value.qty) return;
+                queue.value.push({ ...form.value, date: new Date().toLocaleDateString(), id: Date.now() });
+                form.value.tag = ''; form.value.qty = ''; // Giữ lại Bin
+                step.value = 2; // Quay lại bước 2
+            };
 
-        async function syncData() {
-            if(!scanQueue.length) return alert("Chưa có dữ liệu để đồng bộ!");
-            const btn = document.getElementById('btnSync');
-            btn.innerText = "⏳ ĐANG ĐẨY LÊN..."; btn.disabled = true;
-            try {
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'INBOUND_V2', data: scanQueue }) });
-                alert("Đồng bộ thành công!");
-                location.reload(); 
-            } catch(e) { alert("Lỗi kết nối!"); btn.disabled = false; }
-        }
-
-        async function fetchSheetData() {
-            try {
-                const res = await fetch(SHEET_CSV + '&cache=' + Date.now());
+            const fetchSheetData = async () => {
+                const res = await fetch(CSV_URL + '&cache=' + Date.now());
                 const text = await res.text();
                 const rows = text.split('\n').slice(1);
-                allData = rows.map((row, idx) => ({ vals: row.split(','), rowIdx: idx + 2 })).filter(r => r.vals.length > 5);
-                renderTable(allData);
-            } catch(e) { console.error(e); }
-        }
+                allData.value = rows.map((row, idx) => ({ vals: row.split(','), rowIdx: idx + 2 })).filter(r => r.vals.length > 5);
+            };
 
-        function renderTable(data) {
-            document.getElementById('inventoryBody').innerHTML = data.map(item => `
-                <tr class="hover:bg-slate-50 border-b border-slate-50">
-                    <td class="p-4 text-slate-500">${item.vals[0] || ''}</td>
-                    <td class="p-4 font-bold text-slate-700">${item.vals[1] || ''}</td>
-                    <td class="p-4 font-extrabold text-blue-600">${item.vals[2] || '0'}</td>
-                    <td class="p-4 text-slate-400">${item.vals[3] || ''}</td>
-                    <td class="p-4 text-slate-500">${item.vals[4] || ''}</td>
-                    <td class="p-4 text-slate-400">${item.vals[5] || ''}</td>
-                    <td class="p-4 font-bold text-indigo-600">${item.vals[7] || ''}</td>
-                    <td class="p-4 font-bold text-indigo-500">${item.vals[8] || ''}</td>
-                    <td class="p-4 text-center">
-                        <button onclick="editRow(${item.rowIdx}, '${item.vals[2]}')" class="text-indigo-600 hover:underline font-bold mr-4">Sửa</button>
-                        <button onclick="deleteRow(${item.rowIdx})" class="text-red-500 hover:underline font-bold">Xóa</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+            const resetForm = () => { location.reload(); };
 
-        // HÀM SỬA DÒNG
-        async function editRow(row, oldQty) {
-            const newQty = prompt("Nhập số lượng (QTY) mới cho dòng này:", oldQty);
-            if (newQty !== null && newQty !== "" && newQty !== oldQty) {
-                try {
-                    await fetch(API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        body: JSON.stringify({ action: 'UPDATE', row: row, qty: newQty })
-                    });
-                    alert("Đã cập nhật số lượng thành công!");
-                    fetchSheetData(); 
-                } catch (e) {
-                    alert("Lỗi khi cập nhật dữ liệu!");
-                }
-            }
-        }
+            // Cập nhật đồng hồ mỗi giây
+            setInterval(() => { currentTime.value = new Date().toLocaleString(); }, 1000);
 
-        function deleteRow(row) {
-            if(confirm("Xóa dòng này khỏi Google Sheet?")) {
-                fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'DELETE', row }) });
-                alert("Đã gửi yêu cầu xóa!");
-                fetchSheetData();
-            }
+            return { page, step, stepLabel, form, queue, allData, search, filteredData, currentTime, addToQueue, fetchSheetData, resetForm };
         }
-
-        function filterTable() {
-            const q = document.getElementById('searchBox').value.toLowerCase();
-            const filtered = allData.filter(item => item.vals.join(' ').toLowerCase().includes(q));
-            renderTable(filtered);
-        }
-
-        function switchPage(p) {
-            document.getElementById('view-nhap').classList.toggle('hidden', p!=='nhap');
-            document.getElementById('view-tonkho').classList.toggle('hidden', p!=='tonkho');
-            document.getElementById('m-nhap').className = p==='nhap' ? 'flex items-center gap-3 p-3 rounded-xl cursor-pointer font-bold sidebar-active' : 'flex items-center gap-3 p-3 rounded-xl cursor-pointer font-bold text-slate-500 hover:bg-slate-50';
-            document.getElementById('m-tonkho').className = p==='tonkho' ? 'flex items-center gap-3 p-3 rounded-xl cursor-pointer font-bold sidebar-active' : 'flex items-center gap-3 p-3 rounded-xl cursor-pointer font-bold text-slate-500 hover:bg-slate-50';
-            if(p==='tonkho') fetchSheetData();
-        }
-
-        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString('vi-VN'); }, 1000);
-        window.onload = () => inpBin.focus();
-    </script>
+    }).mount('#app');
+</script>
 </body>
 </html>
