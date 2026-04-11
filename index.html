@@ -161,7 +161,7 @@
 
         function renderTable(data) {
             document.getElementById('inventoryBody').innerHTML = data.map(item => `
-                <tr class="hover:bg-slate-50">
+                <tr class="hover:bg-slate-50 border-b border-slate-50">
                     <td class="p-4 text-slate-500">${item.vals[0] || ''}</td>
                     <td class="p-4 font-bold text-slate-700">${item.vals[1] || ''}</td>
                     <td class="p-4 font-extrabold text-blue-600">${item.vals[2] || '0'}</td>
@@ -171,10 +171,29 @@
                     <td class="p-4 font-bold text-indigo-600">${item.vals[7] || ''}</td>
                     <td class="p-4 font-bold text-indigo-500">${item.vals[8] || ''}</td>
                     <td class="p-4 text-center">
+                        <button onclick="editRow(${item.rowIdx}, '${item.vals[2]}')" class="text-indigo-600 hover:underline font-bold mr-4">Sửa</button>
                         <button onclick="deleteRow(${item.rowIdx})" class="text-red-500 hover:underline font-bold">Xóa</button>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        // HÀM SỬA DÒNG
+        async function editRow(row, oldQty) {
+            const newQty = prompt("Nhập số lượng (QTY) mới cho dòng này:", oldQty);
+            if (newQty !== null && newQty !== "" && newQty !== oldQty) {
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify({ action: 'UPDATE', row: row, qty: newQty })
+                    });
+                    alert("Đã cập nhật số lượng thành công!");
+                    fetchSheetData(); 
+                } catch (e) {
+                    alert("Lỗi khi cập nhật dữ liệu!");
+                }
+            }
         }
 
         function deleteRow(row) {
