@@ -13,8 +13,10 @@
         .sidebar-item:hover { background-color: #f1f5f9; color: #4f46e5; }
         .sidebar-item.active { background-color: #4f46e5; color: white; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3); }
         .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border: 1px solid #e2e8f0; }
-        .step-active { border-color: #4f46e5; background-color: #eef2ff; color: #4f46e5; }
-        .step-done { border-color: #10b981; background-color: #f0fdf4; color: #065f46; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .ai-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
@@ -32,13 +34,17 @@
             <div>
                 <p class="text-[10px] font-bold text-slate-400 uppercase px-3 mb-2 tracking-widest">Vận hành</p>
                 <div class="space-y-1">
-                    <div onclick="switchPage('nhap')" id="menu-nhap" class="sidebar-item active flex items-center gap-3 p-3 rounded-xl text-sm font-semibold"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 003 3h6a3 3 0 003-3V7a3 3 0 00-3-3h-6a3 3 0 00-3 3v1" /></svg>Nhập kho</div>
+                    <div onclick="switchPage('nhap')" id="menu-nhap" class="sidebar-item flex items-center gap-3 p-3 rounded-xl text-sm font-semibold text-slate-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 003 3h6a3 3 0 003-3V7a3 3 0 00-3-3h-6a3 3 0 00-3 3v1" /></svg>Nhập kho</div>
                     <div onclick="switchPage('xuat')" id="menu-xuat" class="sidebar-item flex items-center gap-3 p-3 rounded-xl text-sm font-medium text-slate-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Xuất kho</div>
                 </div>
             </div>
             <div>
                 <p class="text-[10px] font-bold text-slate-400 uppercase px-3 mt-6 mb-2 tracking-widest">Báo cáo</p>
-                <div onclick="switchPage('dashboard')" id="menu-dashboard" class="sidebar-item flex items-center gap-3 p-3 rounded-xl text-sm font-medium text-slate-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>Dashboard Tổng thể</div>
+                <div class="space-y-1">
+                    <div onclick="switchPage('dashboard')" id="menu-dashboard" class="sidebar-item flex items-center gap-3 p-3 rounded-xl text-sm font-medium text-slate-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>Dashboard Tổng thể</div>
+                    <!-- MENU MỚI THÊM -->
+                    <div onclick="switchPage('tonkho')" id="menu-tonkho" class="sidebar-item flex items-center gap-3 p-3 rounded-xl text-sm font-medium text-slate-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>Tồn Kho Thành Phẩm</div>
+                </div>
             </div>
         </nav>
         <div class="p-4 border-t border-slate-100">
@@ -56,8 +62,9 @@
         </header>
 
         <div id="mainContent" class="flex-1 p-8 overflow-y-auto custom-scrollbar">
+            
             <!-- VIEW NHẬP KHO -->
-            <div id="view-nhap" class="max-w-2xl mx-auto space-y-6">
+            <div id="view-nhap" class="hidden max-w-2xl mx-auto space-y-6">
                 <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl text-center space-y-6">
                     <h3 class="text-2xl font-bold text-slate-800">Nhập Kho Nhanh</h3>
                     <div class="flex flex-col items-center gap-4">
@@ -77,10 +84,43 @@
                     <h3 class="text-2xl font-bold text-slate-800">Xuất Kho Nhanh</h3>
                     <div class="flex flex-col items-center gap-4">
                         <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.//8 4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 17v-10l8 4" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-8 4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 17v-10l8 4" /></svg>
                         </div>
                         <input type="text" id="exportInput" class="w-full p-5 border-2 border-red-100 rounded-2xl text-center text-2xl focus:ring-4 focus:ring-red-100 outline-none transition-all" placeholder="Quét Tag ID để xuất...">
                         <p id="exportLabel" class="text-sm text-slate-500">Quét mã Tag để trừ tồn kho</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW TỒN KHO (MỚI) -->
+            <div id="view-tonkho" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-slate-800">Danh sách Tồn kho Thành phẩm</h3>
+                    <div class="relative w-72">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </span>
+                        <input type="text" id="searchInv" onkeyup="filterInventory()" class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tìm mã hàng, tên sản phẩm...">
+                    </div>
+                </div>
+                
+                <div class="glass-card rounded-3xl overflow-hidden border border-slate-200 shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                                <tr>
+                                    <th class="p-4">Mã Sản Phẩm</th>
+                                    <th class="p-4">Tên Sản Phẩm</th>
+                                    <th class="p-4 text-center">Số Lượng</th>
+                                    <th class="p-4">Vị Trí</th>
+                                    <th class="p-4">Ngày Cập Nhật</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryBody" class="divide-y divide-slate-100">
+                                <!-- Data will be injected here -->
+                                <tr><td colspan="5" class="p-8 text-center text-slate-400 italic">Đang tải dữ liệu từ Google Sheets...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -108,18 +148,20 @@
                 </button>
             </div>
         </div>
-    </main>
+    </div>
 
     <script>
         const CLOUD_URL = 'https://script.google.com/macros/s/XXXX_LINK_CỦA_ANH_XXXX/exec';
-        
+        const SHEET_ID = '187ELbEKpx_ZOlIowIj9M0Rqt7V3R2SMdcrtGUylNAnA';
+        const SHEET_GID = '606205569';
+
         let currentStep = 'LOC';
         let currentLoc = localStorage.getItem('pda_loc_pro') || '';
         let tempRow = { tag: '', item: '', qty: '' };
         let scannedData = [];
 
         function switchPage(pageId) {
-            ['view-dashboard', 'view-nhap', 'view-xuat'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['view-dashboard', 'view-nhap', 'view-xuat', 'view-tonkho'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
             
             if (pageId === 'dashboard') {
@@ -135,7 +177,55 @@
                 document.getElementById('view-xuat').classList.remove('hidden');
                 document.getElementById('menu-xuat').classList.add('active');
                 document.getElementById('pageTitle').innerText = 'Xuất Kho Thông Minh';
+            } else if (pageId === 'tonkho') {
+                document.getElementById('view-tonkho').classList.remove('hidden');
+                document.getElementById('menu-tonkho').classList.add('active');
+                document.getElementById('pageTitle').innerText = 'Tồn Kho Thành Phẩm';
+                loadInventoryFromSheet();
             }
+        }
+
+        // Lấy dữ liệu từ Google Sheets qua CSV Export
+        async function loadInventoryFromSheet() {
+            const tableBody = document.getElementById('inventoryBody');
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.text();
+                
+                // Tách dòng và loại bỏ dòng tiêu đề (dòng 1)
+                const rows = data.split('\n').slice(1);
+                tableBody.innerHTML = '';
+
+                rows.forEach(row => {
+                    const cols = row.split(','); 
+                    if (cols.length >= 3) {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-50 transition-colors cursor-default";
+                        tr.innerHTML = `
+                            <td class="p-4 font-semibold text-indigo-600">${cols[0]}</td>
+                            <td class="p-4 text-slate-700">${cols[1]}</td>
+                            <td class="p-4 text-center font-bold">${cols[2]}</td>
+                            <td class="p-4 text-slate-500">${cols[3] || '-'}</td>
+                            <td class="p-4 text-slate-400 text-xs">${cols[4] || '-'}</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    }
+                });
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-500">Lỗi kết nối dữ liệu Sheets. Vui lòng kiểm tra quyền chia sẻ file.</td></tr>`;
+            }
+        }
+
+        function filterInventory() {
+            const input = document.getElementById('searchInv').value.toLowerCase();
+            const rows = document.querySelectorAll('#inventoryBody tr');
+            
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? '' : 'none';
+            });
         }
 
         // LOGIC NHẬP KHO
@@ -169,7 +259,6 @@
                 const tagId = this.value.trim();
                 if (!tagId) return;
                 
-                // Gửi yêu cầu XUẤT lên Google Script
                 fetch(CLOUD_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -194,19 +283,19 @@
                 alert('✅ ĐỒNG BỘ THÀNH CÔNG!');
                 scannedData = [];
             } catch (e) { alert('Lỗi!'); }
-            btn,innerHTML = 'Đồng bộ Cloud';
+            btn.innerHTML = 'Đồng bộ Cloud';
         });
 
         function askAI() {
             const cmd = document.getElementById('aiCmd').value.toLowerCase();
             if (cmd.includes('nhập')) switchPage('nhap');
             else if (cmd.includes('xuất')) switchPage('xuat');
+            else if (cmd.includes('tồn') || cmd.includes('danh sách')) switchPage('tonkho');
             else if (cmd.includes('dashboard')) switchPage('dashboard');
             else alert('AI: Tôi đã ghi nhận yêu cầu, đang xử lý dữ liệu trong kho...');
             document.getElementById('aiCmd').value = '';
         }
 
-        // Mock Dashboard
         function loadDashboardData() {
             new Chart(document.getElementById('mainChart'), {
                 type: 'line',
@@ -220,7 +309,7 @@
 
         window.onload = () => {
             switchPage('dashboard');
-            // init charts...
+            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('vi-VN');
         };
     </script>
 </body>
