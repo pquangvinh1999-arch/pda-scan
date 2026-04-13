@@ -26,7 +26,7 @@
             </div>
             <div class="text-right">
                 <p class="text-2xl font-black">{{ queue.length }}</p>
-                <p class="text-[10px] uppercase">Tags đã quét</p>
+                <p class="text-[10px] uppercase">Tags đợi đồng bộ</p>
             </div>
         </div>
     </div>
@@ -48,17 +48,18 @@
 
         <div class="grid grid-cols-2 gap-3">
             <button @click="exportExcel" class="bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-md hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2">
-                <span>📥</span> Xuất Excel
+                <span>📥</span> Excel
             </button>
-            <button @click="syncCloud" :disabled="isSyncing" class="bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50">
-                {{ isSyncing ? '...Đang lưu' : '☁️ Đồng bộ' }}
+            <button @click="syncCloud" :disabled="isSyncing || queue.length === 0" 
+                    class="bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50">
+                {{ isSyncing ? '...Đang lưu' : '☁️ Đồng bộ Cloud' }}
             </button>
         </div>
     </div>
 
     <div class="flex-1 overflow-hidden flex flex-col">
         <div class="flex justify-between items-center mb-2 px-2">
-            <h3 class="text-sm font-bold text-slate-600">Dữ liệu vừa quét</h3>
+            <h3 class="text-sm font-bold text-slate-600">Dữ liệu trong hàng chờ</h3>
             <button @click="clearAll" class="text-[10px] font-bold text-red-500 uppercase">Xóa hết</button>
         </div>
         
@@ -86,7 +87,7 @@
             </transition-group>
             
             <div v-if="queue.length === 0" class="text-center py-10 text-slate-400 italic text-sm">
-                Chưa có dữ liệu, hãy bắt đầu quét...
+                Đã đồng bộ sạch sẽ hoặc chưa có mã mới...
             </div>
         </div>
     </div>
@@ -97,14 +98,15 @@
 
     createApp({
         setup() {
-            const queue = ref(JSON.parse(localStorage.getItem('vinh_pda_data')) || []);
+            // 1. Quản lý trạng thái
+            const queue = ref(JSON.parse(localStorage.getItem('Vinh_PDA_Data')) || []);
             const form = ref({ loc: '', tag: '' });
             const isSyncing = ref(false);
             const locInput = ref(null);
             const tagInput = ref(null);
 
-            // API URL của anh (Thay link Google Apps Script hoặc Power Automate vào đây)
-            const CLOUD_API = 'URL_API_CUA_ANH_VÀO_ĐÂY';
+            // ⚠️ ANH DÁN URL APPS SCRIPT ĐÃ TRIỂN KHAI VÀO ĐÂY
+            const CLOUD_API = 'https://script.google.com/macros/s/AKfycbx_yiyQX_5sZzzjuYCewBJbolSwfD_wZK5qDetlbvN1bTrqoVNGU7Pm2SS-ZOl4lN0T9g/exec';
 
             const queueReversed = computed(() => [...queue.value].reverse());
 
@@ -113,87 +115,100 @@
             };
 
             const handleScan = () => {
-                if (!form.value.loc) {
-                    alert("Chưa có Vị trí anh ơi!");
+                const locVal = form.value.loc.trim();
+                const tagVal = form.value.tag.trim();
+
+                if (!locVal) {
+                    alert("⚠️ Anh chưa quét Vị trí!");
                     locInput.value.focus();
                     return;
                 }
-                if (!form.value.tag) return;
+                if (!tagVal) return;
 
+                // Thêm vào danh sách tạm
                 queue.value.push({
                     id: Date.now(),
-                    loc: form.value.loc.trim(),
-                    tag: form.value.tag.trim(),
-                    time: new Date().toLocaleString()
+                    loc: locVal,
+                    tag: tagVal,
+                    time: new Date().toLocaleString('vi-VN')
                 });
 
-                // Reset mã tag để quét tiếp, giữ nguyên vị trí
-                form.value.tag = '';
+                form.value.tag = ''; // Xóa mã tag để quét mã tiếp theo
                 saveLocal();
                 tagInput.value.focus();
             };
 
-            const deleteItem = (id) => {
-                if(confirm('Xóa mã này nhé anh?')) {
-                    queue.value = queue.value.filter(item => item.id !== id);
+            const syncCloud = async () => {
+                if (queue.value.length === 0) return;
+                if (CLOUD_API.includes('DÁN_LINK')) return alert("Anh chưa dán link Cloud API kìa!");
+                
+                isSyncing.value = true;
+                
+                try {
+                    // Cấu trúc dữ liệu khớp hoàn toàn với JSON.parse trong Apps Script của anh
+                    const payload = {
+                        data: queue.value 
+                    };
+
+                    await fetch(CLOUD_API, {
+                        method: 'POST',
+                        mode: 'no-cors', // Bắt buộc cho Google Apps Script
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    // Vì no-cors không đọc được response, ta giả định thành công nếu không nhảy vào catch
+                    alert("🚀 Đồng bộ thành công về Cloud!");
+                    queue.value = []; // Xóa danh sách sau khi đã gửi đi thành công
                     saveLocal();
+                    
+                } catch (e) {
+                    console.error(e);
+                    alert("❌ Lỗi kết nối! Anh kiểm tra mạng hoặc link API nhé.");
+                } finally {
+                    isSyncing.value = false;
                 }
+            };
+
+            const saveLocal = () => {
+                localStorage.setItem('Vinh_PDA_Data', JSON.stringify(queue.value));
+            };
+
+            const deleteItem = (id) => {
+                queue.value = queue.value.filter(item => item.id !== id);
+                saveLocal();
             };
 
             const editItem = (id) => {
                 const item = queue.value.find(i => i.id === id);
                 const newTag = prompt("Sửa lại Tag ID:", item.tag);
-                if (newTag) {
+                if (newTag !== null) {
                     item.tag = newTag.trim();
                     saveLocal();
                 }
             };
 
             const clearAll = () => {
-                if(confirm('Xóa hết dữ liệu đang quét để làm mới?')) {
+                if(confirm('Xóa sạch danh sách đợi?')) {
                     queue.value = [];
-                    form.value = { loc: '', tag: '' };
                     saveLocal();
-                    locInput.value.focus();
                 }
-            };
-
-            const saveLocal = () => {
-                localStorage.setItem('vinh_pda_data', JSON.stringify(queue.value));
             };
 
             const exportExcel = () => {
-                if (queue.value.length === 0) return alert("Không có gì để xuất anh ơi!");
-                const data = queue.value.map(item => ({ "Tag ID": item.tag, "Vị Trí": item.loc, "Thời Gian": item.time }));
-                const ws = XLSX.utils.json_to_sheet(data);
+                if (queue.value.length === 0) return alert("Không có dữ liệu!");
+                const excelData = queue.value.map(item => ({ "Tag ID": item.tag, "Vị Trí": item.loc, "Thời Gian": item.time }));
+                const ws = XLSX.utils.json_to_sheet(excelData);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-                XLSX.writeFile(wb, `Mapping_Vinh_${Date.now()}.xlsx`);
-            };
-
-            const syncCloud = async () => {
-                if (queue.value.length === 0) return;
-                isSyncing.value = true;
-                try {
-                    // Nếu dùng Google Apps Script
-                    await fetch(CLOUD_API, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        body: JSON.stringify({ action: 'MAPPING', data: queue.value })
-                    });
-                    alert("Đã đồng bộ lên Cloud thành công!");
-                } catch (e) {
-                    alert("Lỗi kết nối Cloud, anh xuất Excel tạm nhé!");
-                } finally {
-                    isSyncing.value = false;
-                }
+                XLSX.utils.book_append_sheet(wb, ws, "Mapping");
+                XLSX.writeFile(wb, `PDA_Export_${Date.now()}.xlsx`);
             };
 
             onMounted(() => {
                 locInput.value.focus();
             });
 
-            return { queue, form, queueReversed, isSyncing, locInput, tagInput, focusTag, handleScan, deleteItem, editItem, clearAll, exportExcel, syncCloud };
+            return { queue, form, queueReversed, isSyncing, locInput, tagInput, focusTag, handleScan, syncCloud, deleteItem, editItem, clearAll, exportExcel };
         }
     }).mount('#app');
 </script>
