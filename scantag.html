@@ -3,186 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDA Inventory Mapper</title>
+    <title>PDA MAPPING PRO - VINH ENTERPRISE</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Thư viện xuất file Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; }
-        .scan-input { font-size: 24px !important; text-align: center; }
-        .mode-active-loc { background-color: #4f46e5 !important; color: white !important; border-color: #4f46e5 !important; }
-        .mode-active-tag { background-color: #059669 !important; color: white !important; border-color: #059669 !important; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .input-focus:focus { border-color: #4f46e5; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+        .list-enter-active, .list-leave-active { transition: all 0.3s ease; }
+        .list-enter-from, .list-leave-to { opacity: 0; transform: translateX(30px); }
     </style>
 </head>
-<body class="p-4">
+<body>
 
-    <div class="max-w-lg mx-auto bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-        <!-- Header -->
-        <div class="bg-indigo-700 p-4 text-white text-center">
-            <h1 class="text-lg font-bold">PDA MAPPING SYSTEM</h1>
-            <p class="text-xs opacity-80">Quét Vị trí $\rightarrow$ Quét Tag ID $\rightarrow$ Xuất Excel</p>
-        </div>
-
-        <!-- Mode Switcher -->
-        <div class="p-4 bg-gray-100 border-b flex gap-2">
-            <button id="btnModeLoc" onclick="setMode('location')" class="flex-1 py-3 rounded-xl font-bold border-2 border-gray-300 transition-all mode-active-loc">
-                📍 QUÉT VỊ TRÍ
-            </button>
-            <button id="btnModeTag" onclick="setMode('tag')" class="flex-1 py-3 rounded-xl font-bold border-2 border-gray-300 transition-all">
-                🏷️ QUÉT TAG ID
-            </button>
-        </div>
-
-        <!-- Current Location Display -->
-        <div class="px-6 py-3 bg-indigo-50 border-b border-indigo-100 flex justify-between items-center">
-            <span class="text-sm font-semibold text-indigo-600 uppercase">Vị trí hiện tại:</span>
-            <span id="currentLocDisp" class="text-lg font-bold text-indigo-900">Chưa chọn vị trí</span>
-        </div>
-
-        <!-- Input Area -->
-        <div class="p-6 space-y-4">
-            <div class="relative">
-                <label id="inputLabel" class="text-xs font-semibold text-indigo-500 uppercase ml-1">Đang ở chế độ: QUÉT VỊ TRÍ</label>
-                <input type="text" id="barcodeInput" 
-                       class="scan-input w-full p-4 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all" 
-                       placeholder="Đang chờ quét..." autofocus>
+<div id="app" class="max-w-lg mx-auto min-h-screen flex flex-col p-4">
+    <div class="bg-indigo-600 rounded-2xl p-6 text-white shadow-lg mb-4">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight">PDA MAPPING PRO</h1>
+                <p class="text-xs opacity-80 uppercase font-semibold">Vinh Enterprise System</p>
             </div>
-
-            <!-- Control Buttons -->
-            <div class="grid grid-cols-2 gap-3">
-                <button id="btnExport" class="bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition active:scale-95 flex items-center justify-center gap-2">
-                    <span>📥</span> Xuất Excel (.xlsx)
-                </button>
-                <button id="btnClear" class="bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition active:scale-95">
-                    🗑️ Xóa hết
-                </button>
-            </div>
-        </div>
-
-        <!-- Data Preview -->
-        <div class="border-t border-gray-100 p-4 bg-gray-50">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-sm font-bold text-gray-600">Danh sách đã mapping:</span>
-                <span id="count" class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full font-bold">0 mã</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs font-mono">
-                    <thead class="text-gray-400 border-b">
-                        <tr>
-                            <th class="py-2">Tag ID</th>
-                            <th class="py-2 text-right">Vị Trí</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dataList" class="divide-y divide-gray-100">
-                        <!-- Data injected here -->
-                    </tbody>
-                </table>
+            <div class="text-right">
+                <p class="text-2xl font-black">{{ queue.length }}</p>
+                <p class="text-[10px] uppercase">Tags đã quét</p>
             </div>
         </div>
     </div>
 
-    <script>
-        const barcodeInput = document.getElementById('barcodeInput');
-        const dataList = document.getElementById('dataList');
-        const countDisp = document.getElementById('count');
-        const locDisp = document.getElementById('currentLocDisp');
-        const inputLabel = document.getElementById('inputLabel');
-        const btnModeLoc = document.getElementById('btnModeLoc');
-        const btnModeTag = document.getElementById('btnModeTag');
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4 mb-4">
+        <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Bước 1: Vị trí (Bin/Loc)</label>
+            <input v-model="form.loc" ref="locInput" @keyup.enter="focusTag"
+                   class="w-full mt-1 p-4 bg-slate-50 border-2 border-slate-100 rounded-xl text-center text-xl font-bold input-focus outline-none transition-all"
+                   placeholder="Quét Vị Trí...">
+        </div>
 
-        // State
-        let currentMode = 'location'; // 'location' or 'tag'
-        let currentLocation = localStorage.getItem('pda_current_loc') || 'Chưa chọn vị trí';
-        let scannedData = JSON.parse(localStorage.getItem('pda_mapping_data')) || [];
+        <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Bước 2: Mã Tag (Tag ID)</label>
+            <input v-model="form.tag" ref="tagInput" @keyup.enter="handleScan"
+                   class="w-full mt-1 p-4 bg-slate-50 border-2 border-slate-100 rounded-xl text-center text-xl font-bold input-focus outline-none transition-all"
+                   placeholder="Quét Tag ID...">
+        </div>
 
-        function setMode(mode) {
-            currentMode = mode;
-            if (mode === 'location') {
-                btnModeLoc.classList.add('mode-active-loc');
-                btnModeTag.classList.remove('mode-active-tag');
-                inputLabel.innerText = "Đang ở chế độ: QUÉT VỊ TRÍ";
-            } else {
-                btnModeTag.classList.add('mode-active-tag');
-                btnModeLoc.classList.remove('mode-active-loc');
-                inputLabel.innerText = "Đang ở chế độ: QUÉT TAG ID";
-            }
-            barcodeInput.focus();
-        }
+        <div class="grid grid-cols-2 gap-3">
+            <button @click="exportExcel" class="bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-md hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2">
+                <span>📥</span> Xuất Excel
+            </button>
+            <button @click="syncCloud" :disabled="isSyncing" class="bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50">
+                {{ isSyncing ? '...Đang lưu' : '☁️ Đồng bộ' }}
+            </button>
+        </div>
+    </div>
 
-        function updateUI() {
-            // Update current location text
-            locDisp.innerText = currentLocation;
-            localStorage.setItem('pda_current_loc', currentLocation);
-
-            // Update table
-            dataList.innerHTML = '';
-            scannedData.slice().reverse().forEach(item => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="py-2">${item.tag}</td><td class="py-2 text-right">${item.loc}</td>`;
-                dataList.appendChild(tr);
-            });
+    <div class="flex-1 overflow-hidden flex flex-col">
+        <div class="flex justify-between items-center mb-2 px-2">
+            <h3 class="text-sm font-bold text-slate-600">Dữ liệu vừa quét</h3>
+            <button @click="clearAll" class="text-[10px] font-bold text-red-500 uppercase">Xóa hết</button>
+        </div>
+        
+        <div class="overflow-y-auto flex-1 space-y-2 pr-1">
+            <transition-group name="list">
+                <div v-for="(item, index) in queueReversed" :key="item.id" 
+                     class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center group">
+                    <div>
+                        <p class="text-[10px] font-bold text-indigo-500 uppercase">Tag: {{ item.tag }}</p>
+                        <p class="text-sm font-bold text-slate-700">📍 {{ item.loc }}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="editItem(item.id)" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                        <button @click="deleteItem(item.id)" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </transition-group>
             
-            countDisp.innerText = `${scannedData.length} mã`;
-            localStorage.setItem('pda_mapping_data', JSON.stringify(scannedData));
-        }
+            <div v-if="queue.length === 0" class="text-center py-10 text-slate-400 italic text-sm">
+                Chưa có dữ liệu, hãy bắt đầu quét...
+            </div>
+        </div>
+    </div>
+</div>
 
-        barcodeInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                const val = barcodeInput.value.trim();
-                if (!val) return;
+<script>
+    const { createApp, ref, onMounted, computed } = Vue;
 
-                if (currentMode === 'location') {
-                    // Cập nhật vị trí hiện tại
-                    currentLocation = val;
-                    updateUI();
-                } else {
-                    // Lưu Tag ID cùng với vị trí hiện tại
-                    if (currentLocation === 'Chưa chọn vị trí') {
-                        alert('Anh vui lòng quét VỊ TRÍ trước khi quét Tag ID!');
-                    } else {
-                        scannedData.push({ tag: val, loc: currentLocation });
-                        updateUI();
-                    }
+    createApp({
+        setup() {
+            const queue = ref(JSON.parse(localStorage.getItem('vinh_pda_data')) || []);
+            const form = ref({ loc: '', tag: '' });
+            const isSyncing = ref(false);
+            const locInput = ref(null);
+            const tagInput = ref(null);
+
+            // API URL của anh (Thay link Google Apps Script hoặc Power Automate vào đây)
+            const CLOUD_API = 'URL_API_CUA_ANH_VÀO_ĐÂY';
+
+            const queueReversed = computed(() => [...queue.value].reverse());
+
+            const focusTag = () => {
+                if (form.value.loc) tagInput.value.focus();
+            };
+
+            const handleScan = () => {
+                if (!form.value.loc) {
+                    alert("Chưa có Vị trí anh ơi!");
+                    locInput.value.focus();
+                    return;
                 }
-                barcodeInput.value = ''; 
-            }
-        });
+                if (!form.value.tag) return;
 
-        document.addEventListener('click', () => barcodeInput.focus());
+                queue.value.push({
+                    id: Date.now(),
+                    loc: form.value.loc.trim(),
+                    tag: form.value.tag.trim(),
+                    time: new Date().toLocaleString()
+                });
 
-        // XUẤT FILE EXCEL (.xlsx)
-        document.getElementById('btnExport').addEventListener('click', () => {
-            if (scannedData.length === 0) {
-                alert('Chưa có dữ liệu!');
-                return;
-            }
+                // Reset mã tag để quét tiếp, giữ nguyên vị trí
+                form.value.tag = '';
+                saveLocal();
+                tagInput.value.focus();
+            };
 
-            // Chuyển mảng object sang mảng mảng cho SheetJS
-            const ws_data = [
-                ["Tag ID", "Vị Trí"], // Header
-                ...scannedData.map(item => [item.tag, item.loc])
-            ];
+            const deleteItem = (id) => {
+                if(confirm('Xóa mã này nhé anh?')) {
+                    queue.value = queue.value.filter(item => item.id !== id);
+                    saveLocal();
+                }
+            };
 
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            XLSX.utils.book_append_sheet(wb, ws, "Mapping_Data");
-            
-            // Tải file về máy
-            XLSX.writeFile(wb, `Inventory_Mapping_${new Date().getTime()}.xlsx`);
-        });
+            const editItem = (id) => {
+                const item = queue.value.find(i => i.id === id);
+                const newTag = prompt("Sửa lại Tag ID:", item.tag);
+                if (newTag) {
+                    item.tag = newTag.trim();
+                    saveLocal();
+                }
+            };
 
-        document.getElementById('btnClear').addEventListener('click', () => {
-            if (confirm('Xóa toàn bộ dữ liệu?')) {
-                scannedData = [];
-                currentLocation = 'Chưa chọn vị trí';
-                updateUI();
-            }
-        });
+            const clearAll = () => {
+                if(confirm('Xóa hết dữ liệu đang quét để làm mới?')) {
+                    queue.value = [];
+                    form.value = { loc: '', tag: '' };
+                    saveLocal();
+                    locInput.value.focus();
+                }
+            };
 
-        // Init
-        setMode('location');
-        updateUI();
-    </script>
+            const saveLocal = () => {
+                localStorage.setItem('vinh_pda_data', JSON.stringify(queue.value));
+            };
+
+            const exportExcel = () => {
+                if (queue.value.length === 0) return alert("Không có gì để xuất anh ơi!");
+                const data = queue.value.map(item => ({ "Tag ID": item.tag, "Vị Trí": item.loc, "Thời Gian": item.time }));
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+                XLSX.writeFile(wb, `Mapping_Vinh_${Date.now()}.xlsx`);
+            };
+
+            const syncCloud = async () => {
+                if (queue.value.length === 0) return;
+                isSyncing.value = true;
+                try {
+                    // Nếu dùng Google Apps Script
+                    await fetch(CLOUD_API, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify({ action: 'MAPPING', data: queue.value })
+                    });
+                    alert("Đã đồng bộ lên Cloud thành công!");
+                } catch (e) {
+                    alert("Lỗi kết nối Cloud, anh xuất Excel tạm nhé!");
+                } finally {
+                    isSyncing.value = false;
+                }
+            };
+
+            onMounted(() => {
+                locInput.value.focus();
+            });
+
+            return { queue, form, queueReversed, isSyncing, locInput, tagInput, focusTag, handleScan, deleteItem, editItem, clearAll, exportExcel, syncCloud };
+        }
+    }).mount('#app');
+</script>
 </body>
 </html>
