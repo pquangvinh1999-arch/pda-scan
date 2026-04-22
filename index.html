@@ -156,7 +156,7 @@
                 }
             };
 
-            const saveLocal = () => localStorage.setItem('Vinh_WHM_Mapping', JSON.stringify(queue.value));
+            const saveLocal = () => localStorage.setItem('WHMFG_Mapping', JSON.stringify(queue.value));
             const deleteItem = (id) => { queue.value = queue.value.filter(i => i.id !== id); saveLocal(); };
             const editItem = (id) => {
                 const item = queue.value.find(i => i.id === id);
