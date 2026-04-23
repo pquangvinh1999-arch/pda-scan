@@ -129,29 +129,39 @@
             };
 
             const syncCloud = async () => {
-                isSyncing.value = true;
-                try {
-                    const payload = { 
-                        data: queue.value.map(i => ({
-                            tagID: i.tag,
-                            bin: i.loc,
-                            thoiGian: i.time 
-                        }))
-                    };
+    isSyncing.value = true;
+    try {
+        const payload = { 
+            data: queue.value.map(i => ({
+                tagID: i.tag,
+                bin: i.loc,
+                thoiGian: i.time 
+            }))
+        };
 
-                    await fetch(CLOUD_API, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+        // BỎ mode: 'no-cors' để có thể nhận phản hồi từ Server
+        const response = await fetch(CLOUD_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Dùng text/plain để tránh lỗi CORS của Google
+            body: JSON.stringify(payload)
+        });
 
-                    alert("🚀 Đã đồng bộ lên Cloud thành công!");
-                    queue.value = [];
-                    saveLocal();
-                } catch (e) {
-                    alert("❌ Lỗi kết nối. Vui lòng kiểm tra lại!");
-                } finally {
+        const result = await response.json();
+        
+        if (result.result && result.result.includes("thành công")) {
+            alert("🚀 " + result.result);
+            queue.value = [];
+            saveLocal();
+        } else {
+            alert("⚠️ Server báo lỗi: " + result.result);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("❌ Lỗi kết nối: " + e.message + ". Hãy kiểm tra lại Deploy Web App!");
+    } finally {
+        isSyncing.value = false;
+    }
+};
                     isSyncing.value = false;
                 }
             };
