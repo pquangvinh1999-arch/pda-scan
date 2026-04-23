@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WHMFG PRO - By Vinh</title>
+    <!-- Import Vue 3 từ CDN chính thức -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -25,7 +26,6 @@
             <p class="text-[10px] opacity-80 uppercase font-semibold">PDA BIN MAPPING | {{ currentTime }}</p>
         </div>
         <div class="text-right">
-            <!-- ĐÃ SỬA: Thay số 0 thành {{ queue.length }} để tự động đếm -->
             <p class="text-3xl font-black">{{ queue.length }}</p>
             <p class="text-[10px] uppercase">Tags ID chờ </p>
         </div>
@@ -134,7 +134,7 @@
 
                 form.value.tag = ''; 
                 saveLocal();
-                tagInput.value.// Focus back to tag input for next scan
+                // Sửa lỗi: focus đúng vào tagInput
                 if(tagInput.value) tagInput.value.focus();
             };
 
