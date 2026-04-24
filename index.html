@@ -157,14 +157,13 @@
             const STORAGE_KEY = 'pda_enterprise_mapping';
             const currentLocation = ref(localStorage.getItem('pda_current_loc') || 'Chưa chọn vị trí');
             const currentTag = ref('');
-            const scannedData = ref(JSON.parse(localStorage.getItem('pda_mapping_data')) ||[]);
+            const scannedData = ref(JSON.parse(localStorage.getItem('pda_mapping_data')) || []);
             const isSyncing = ref(false);
             const currentTime = ref('');
             const locInput = ref(null);
             const tagInput = ref(null);
             const activeInput = ref('loc'); // 'loc' or 'tag'
 
-            // Link GAS của anh (giữ nguyên)
             const CLOUD_API = 'https://script.google.com/macros/s/AKfycbyMECd-im1zwQJ8TQEgDbJF3O6go4uQLSl9UoIoTxnQjgY9WbufHwt8JWkyhVOPBKgn/exec';
 
             const reversedData = computed(() => [...scannedData.value].reverse());
@@ -209,15 +208,14 @@
                 nextTick(() => tagInput.value.focus());
             };
 
-            // HÀM ĐỒNG BỘ DỮ LIỆU ĐÃ ĐƯỢC CHỈNH SỬA
             const syncCloud = async () => {
                 isSyncing.value = true;
                 try {
                     const payload = { 
                         data: scannedData.value.map(i => ({
                             tagID: i.tag,
-                            bin: i.loc
-                            // Đã XÓA biến thoiGian ở đây để GAS nhận đúng diện lệnh NHẬP KHO
+                            bin: i.loc,
+                            thoiGian: i.time 
                         }))
                     };
 
@@ -230,7 +228,7 @@
                     const result = await response.json();
                     if (result.result && result.result.includes("thành công")) {
                         alert("🚀 " + result.result);
-                        scannedData.value =[];
+                        scannedData.value = [];
                         localStorage.setItem('pda_mapping_data', JSON.stringify([]));
                     } else {
                         alert("⚠️ Server báo lỗi: " + (result.result || "Không xác định"));
@@ -259,9 +257,9 @@
 
             const clearAll = () => {
                 if(confirm('Xóa sạch toàn bộ hàng chờ?')) {
-                    scannedData.value =[];
+                    scannedData.value = [];
                     currentLocation.value = 'Chưa chọn vị trí';
-                    localStorage.setItem('pda_mapping_data', JSON.stringify(
+                    localStorage.setItem('pda_mapping_data', JSON.stringify([]));
                     localStorage.setItem('pda_current_loc', 'Chưa chọn vị trí');
                 }
             };
